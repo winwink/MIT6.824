@@ -4,7 +4,7 @@ import "fmt"
 import "log"
 import "net/rpc"
 import "hash/fnv"
-
+import "strconv"
 
 //
 // Map functions return a slice of KeyValue.
@@ -35,9 +35,24 @@ func Worker(mapf func(string, string) []KeyValue,
 
 	// uncomment to send the Example RPC to the master.
 	// CallExample()
-
+	GetTask()
 }
 
+func GetTask(){
+	args := ExampleArgs{}
+	reply := TaskState{}
+	call("Master.GetTask", args, &reply)
+	if(reply.TaskName==""){
+		fmt.Println("No Task")
+	} else {
+		fmt.Println("GetTask "+reply.ToString2())
+	}
+	
+}
+
+func (task *TaskState) ToString2() string{
+	return "Task, Type:"+task.TaskType+", Name:"+task.TaskName+", No:"+strconv.Itoa(task.TaskNo)+", State: "+strconv.Itoa(task.State)
+}
 //
 // example function to show how to make an RPC call to the master.
 //

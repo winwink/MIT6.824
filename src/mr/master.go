@@ -5,12 +5,18 @@ import "net"
 import "os"
 import "net/rpc"
 import "net/http"
+import "strconv"
+import "fmt"
+
+
 
 
 type Master struct {
 	// Your definitions here.
-
+	MapTask []TaskState
+	ReduceTask []TaskState
 }
+
 
 // Your code here -- RPC handlers for the worker to call.
 
@@ -22,6 +28,56 @@ type Master struct {
 func (m *Master) Example(args *ExampleArgs, reply *ExampleReply) error {
 	reply.Y = args.X + 1
 	return nil
+}
+
+func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
+	fmt.Println("GetTask Start")
+	mapTaskDone := m.MapTaskDone()
+	if(mapTaskDone!=true){
+		task := GetFirstTaskUnsigned(m.MapTask)
+		if(task==nil) {
+			return nil
+		}
+		fmt.Println("GetTask Map, Task:"+task.ToString())
+		reply.CopyFrom(task)
+		m.MapTask[task.TaskNo].State = 1
+		return nil
+	}
+	
+	reduceTaskDone := m.ReduceTaskDone()
+	if(reduceTaskDone != true){
+		task := GetFirstTaskUnsigned(m.ReduceTask)
+		if(task==nil) {
+			return nil
+		}
+		fmt.Println("GetTask Reduce, Task"+task.ToString())
+		reply.CopyFrom(task)
+		m.ReduceTask[task.TaskNo].State = 1
+		return nil
+	}
+	fmt.Println("GetTask Done")
+	return nil
+}
+
+func (m *Master) UpdateTask(task TaskState) {
+	fmt.Println("Update Task Type:"+task.TaskType+", No:"+ strconv.Itoa(task.TaskNo))
+  if(task.TaskType=="Map"){
+		for _,v := range m.MapTask{
+			if(v.TaskNo == task.TaskNo){
+				fmt.Println("Update Task map match")
+				m.MapTask[task.TaskNo].State = 2
+			}
+		}
+	}
+	if(task.TaskType=="Reduce"){
+		for _,v := range m.ReduceTask{
+			if(v.TaskNo == task.TaskNo){
+				fmt.Println("Update Task reduce match")
+				m.ReduceTask[task.TaskNo].State = 2
+			}
+		}
+	}
+	fmt.Println("Update Task none match")
 }
 
 
@@ -47,13 +103,59 @@ func (m *Master) server() {
 //
 func (m *Master) Done() bool {
 	ret := false
-
-	// Your code here.
-
-
+	for _,v := range m.MapTask{
+		if(v.State != 2){
+			return ret
+		}
+	}
+	for _,v := range m.ReduceTask{
+		if(v.State != 2){
+			return ret;
+		}
+	}
+	ret = true
 	return ret
 }
 
+func (m *Master) MapTaskDone() bool{
+	ret := false
+	for _,v := range m.MapTask{
+		if(v.State != 2){
+			return ret
+		}
+	}
+	return true
+}
+
+func (m *Master) ReduceTaskDone() bool{
+	ret := false
+	for _,v := range m.ReduceTask{
+		if(v.State != 2){
+			return ret
+		}
+	}
+	return true
+}
+
+func GetFirstTaskUnsigned(tasks []TaskState) *TaskState{
+  for _,task := range tasks{
+		if(task.State == 0){
+			return &task
+		}
+	}
+	return nil
+}
+
+func (task *TaskState) ToString() string{
+	return "Task, Type:"+task.TaskType+", Name:"+task.TaskName+", No:"+strconv.Itoa(task.TaskNo)+", State: "+strconv.Itoa(task.State)
+}
+
+func (task *TaskState) CopyFrom(s *TaskState){
+	task.TaskName = s.TaskName
+	task.TaskNo = s.TaskNo
+	task.TaskType = s.TaskType
+	task.State = s.State
+}
 //
 // create a Master.
 // main/mrmaster.go calls this function.
@@ -61,9 +163,17 @@ func (m *Master) Done() bool {
 //
 func MakeMaster(files []string, nReduce int) *Master {
 	m := Master{}
+	m.MapTask = []TaskState{}
+	for i:=0;i<len(files);i++ {
+		task := TaskState{files[i], "Map", i, 0}
+		m.MapTask = append(m.MapTask, task)
+	}
 
-	// Your code here.
-
+	m.ReduceTask = []TaskState{}
+	for i:=0;i<nReduce;i++{
+		task := TaskState{strconv.Itoa(i), "Reduce", i, 0}
+		m.ReduceTask = append(m.ReduceTask, task)
+	}
 
 	m.server()
 	return &m

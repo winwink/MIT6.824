@@ -22,6 +22,12 @@ type ExampleReply struct {
 	Y int
 }
 
+type TaskState struct {
+	TaskName string
+	TaskType string
+	TaskNo int
+	State int // 0 未分配, 1 进行中, 2 已完成
+}
 // Add your RPC definitions here.
 
 
