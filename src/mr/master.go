@@ -15,6 +15,7 @@ type Master struct {
 	// Your definitions here.
 	MapTask []TaskState
 	ReduceTask []TaskState
+	NReduce int
 }
 
 
@@ -59,25 +60,21 @@ func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
 	return nil
 }
 
-func (m *Master) UpdateTask(task TaskState) {
+func (m *Master) UpdateTask(task TaskState, reply *TaskState) error{
 	fmt.Println("Update Task Type:"+task.TaskType+", No:"+ strconv.Itoa(task.TaskNo))
-  if(task.TaskType=="Map"){
-		for _,v := range m.MapTask{
-			if(v.TaskNo == task.TaskNo){
-				fmt.Println("Update Task map match")
-				m.MapTask[task.TaskNo].State = 2
-			}
-		}
+  if(task.TaskType=="Map"){ 
+		fmt.Println("Update Task map match")
+		m.MapTask[task.TaskNo].State = 2
+		return nil
 	}
+	
 	if(task.TaskType=="Reduce"){
-		for _,v := range m.ReduceTask{
-			if(v.TaskNo == task.TaskNo){
-				fmt.Println("Update Task reduce match")
-				m.ReduceTask[task.TaskNo].State = 2
-			}
-		}
+		fmt.Println("Update Task reduce match")
+		m.ReduceTask[task.TaskNo].State = 2
+		return nil
 	}
 	fmt.Println("Update Task none match")
+	return nil
 }
 
 
@@ -155,6 +152,7 @@ func (task *TaskState) CopyFrom(s *TaskState){
 	task.TaskNo = s.TaskNo
 	task.TaskType = s.TaskType
 	task.State = s.State
+	task.NReduce = s.NReduce
 }
 //
 // create a Master.
@@ -165,15 +163,17 @@ func MakeMaster(files []string, nReduce int) *Master {
 	m := Master{}
 	m.MapTask = []TaskState{}
 	for i:=0;i<len(files);i++ {
-		task := TaskState{files[i], "Map", i, 0}
+		task := TaskState{files[i], "Map", i, 0, nReduce}
 		m.MapTask = append(m.MapTask, task)
 	}
 
 	m.ReduceTask = []TaskState{}
 	for i:=0;i<nReduce;i++{
-		task := TaskState{strconv.Itoa(i), "Reduce", i, 0}
+		task := TaskState{strconv.Itoa(i), "Reduce", i, 0, nReduce}
 		m.ReduceTask = append(m.ReduceTask, task)
 	}
+
+	m.NReduce = nReduce
 
 	m.server()
 	return &m
