@@ -49,13 +49,24 @@ func Worker(mapf func(string, string) []KeyValue,
 
 	// uncomment to send the Example RPC to the master.
 	// CallExample()
-	GetTask(mapf, reducef)
+	for{
+		getNext := GetTask(mapf, reducef)
+		if(!getNext){
+			break
+		}
+	}
+	
 }
 
-func GetTask(mapf func(string, string) []KeyValue, reducef func(string, []string) string){
+func GetTask(mapf func(string, string) []KeyValue, reducef func(string, []string) string)(getNext bool){
 	args := ExampleArgs{}
 	reply := TaskState{}
 	call("Master.GetTask", args, &reply)
+	if(reply.AllJobDone){
+		fmt.Println("AllJobDone")
+		return false
+	}
+
 	if(reply.TaskName==""){
 		fmt.Println("No Task")
 		return;
@@ -69,6 +80,7 @@ func GetTask(mapf func(string, string) []KeyValue, reducef func(string, []string
 	}
 
 	UpdateTask(reply)
+	return true
 }
 
 func GetTaskMap(mapf func(string, string) []KeyValue, reply TaskState){

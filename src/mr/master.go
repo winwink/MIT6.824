@@ -33,6 +33,7 @@ func (m *Master) Example(args *ExampleArgs, reply *ExampleReply) error {
 
 func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
 	fmt.Println("GetTask Start")
+	reply.AllJobDone = false
 	mapTaskDone := m.MapTaskDone()
 	if(mapTaskDone!=true){
 		task := GetFirstTaskUnsigned(m.MapTask)
@@ -57,6 +58,7 @@ func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
 		return nil
 	}
 	fmt.Println("GetTask Done")
+	reply.AllJobDone = true
 	return nil
 }
 
@@ -163,13 +165,13 @@ func MakeMaster(files []string, nReduce int) *Master {
 	m := Master{}
 	m.MapTask = []TaskState{}
 	for i:=0;i<len(files);i++ {
-		task := TaskState{files[i], "Map", i, 0, nReduce}
+		task := TaskState{files[i], "Map", i, 0, nReduce, false}
 		m.MapTask = append(m.MapTask, task)
 	}
 
 	m.ReduceTask = []TaskState{}
 	for i:=0;i<nReduce;i++{
-		task := TaskState{strconv.Itoa(i), "Reduce", i, 0, nReduce}
+		task := TaskState{strconv.Itoa(i), "Reduce", i, 0, nReduce, false}
 		m.ReduceTask = append(m.ReduceTask, task)
 	}
 

@@ -28,6 +28,7 @@ type TaskState struct {
 	TaskNo int
 	State int // 0 未分配, 1 进行中, 2 已完成
 	NReduce int
+	AllJobDone bool
 }
 // Add your RPC definitions here.
 
