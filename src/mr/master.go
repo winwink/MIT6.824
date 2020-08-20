@@ -32,7 +32,7 @@ func (m *Master) Example(args *ExampleArgs, reply *ExampleReply) error {
 }
 
 func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
-	fmt.Println("GetTask Start")
+	//fmt.Println("GetTask Start")
 	reply.AllJobDone = false
 	mapTaskDone := m.MapTaskDone()
 	if(mapTaskDone!=true){
@@ -40,7 +40,7 @@ func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
 		if(task==nil) {
 			return nil
 		}
-		fmt.Println("GetTask Map, Task:"+task.ToString())
+		//fmt.Println("GetTask Map, Task:"+task.ToString())
 		reply.CopyFrom(task)
 		m.MapTask[task.TaskNo].State = 1
 		return nil
@@ -52,7 +52,7 @@ func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
 		if(task==nil) {
 			return nil
 		}
-		fmt.Println("GetTask Reduce, Task"+task.ToString())
+		//fmt.Println("GetTask Reduce, Task"+task.ToString())
 		reply.CopyFrom(task)
 		m.ReduceTask[task.TaskNo].State = 1
 		return nil
@@ -63,15 +63,15 @@ func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
 }
 
 func (m *Master) UpdateTask(task TaskState, reply *TaskState) error{
-	fmt.Println("Update Task Type:"+task.TaskType+", No:"+ strconv.Itoa(task.TaskNo))
+	//fmt.Println("Update Task Type:"+task.TaskType+", No:"+ strconv.Itoa(task.TaskNo))
   if(task.TaskType=="Map"){ 
-		fmt.Println("Update Task map match")
+		//fmt.Println("Update Task map match")
 		m.MapTask[task.TaskNo].State = 2
 		return nil
 	}
 	
 	if(task.TaskType=="Reduce"){
-		fmt.Println("Update Task reduce match")
+		//fmt.Println("Update Task reduce match")
 		m.ReduceTask[task.TaskNo].State = 2
 		return nil
 	}

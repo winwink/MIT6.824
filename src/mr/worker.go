@@ -68,10 +68,11 @@ func GetTask(mapf func(string, string) []KeyValue, reducef func(string, []string
 	}
 
 	if(reply.TaskName==""){
-		fmt.Println("No Task")
+		//fmt.Println("No Task")
+		// sleep(time.Duration(1)*time.Second)
 		return;
 	} else {
-		fmt.Println("GetTask "+reply.ToString2())
+		//fmt.Println("GetTask "+reply.ToString2())
 	}
 	if(reply.TaskType=="Map"){
 		GetTaskMap(mapf, reply)
@@ -124,7 +125,7 @@ func GetTaskMap(mapf func(string, string) []KeyValue, reply TaskState){
 
 func GetTaskReduce(reducef func(string, []string) string, reply TaskState){
 	reg := regexp.MustCompile(`^mr-\d+-`+strconv.Itoa(reply.TaskNo)+`$`)
-	fmt.Println("regex:"+reg.String())
+	//fmt.Println("regex:"+reg.String())
 	files, _ := ioutil.ReadDir(`./`)
 	kva := []KeyValue{}
 	for _, file:= range files{
@@ -132,7 +133,7 @@ func GetTaskReduce(reducef func(string, []string) string, reply TaskState){
 			continue
 		} else {
 			filename:= file.Name()
-			fmt.Println(filename)
+			//fmt.Println(filename)
 			if(reg.MatchString(filename)){
 				file, err := os.Open(filename)
 				if err != nil {
@@ -155,7 +156,7 @@ func GetTaskReduce(reducef func(string, []string) string, reply TaskState){
 				}
 			}
 		}
-		fmt.Println("kva len:"+strconv.Itoa(len(kva)))
+		//fmt.Println("kva len:"+strconv.Itoa(len(kva)))
 	}
 	sort.Sort(ByKey(kva))
 
