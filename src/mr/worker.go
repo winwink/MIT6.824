@@ -145,6 +145,27 @@ func GetTaskReduce(reducef func(string, []string) string, reply TaskState){
 		}
 		fmt.Println("kva len:"+strconv.Itoa(len(kva)))
 	}
+	sort.Sort(ByKey(kva))
+
+	oname := "mr-out-"+strconv.Itoa(reply.TaskNo)
+	ofile, _ := os.Create(oname)
+	i := 0
+	for i < len(kva) {
+		j := i + 1
+		for j < len(kva) && kva[j].Key == kva[i].Key {
+			j++
+		}
+		values := []string{}
+		for k := i; k < j; k++ {
+			values = append(values, kva[k].Value)
+		}
+		output := reducef(kva[i].Key, values)
+
+		// this is the correct format for each line of Reduce output.
+		fmt.Fprintf(ofile, "%v %v\n", kva[i].Key, output)
+
+		i = j
+	}
 }
 func UpdateTask(task TaskState){
 	reply := TaskState{}
