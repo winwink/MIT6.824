@@ -7,8 +7,8 @@ import "net/rpc"
 import "net/http"
 import "strconv"
 import "fmt"
-
-
+import "sync"
+import "time"
 
 
 type Master struct {
@@ -16,6 +16,7 @@ type Master struct {
 	MapTask []TaskState
 	ReduceTask []TaskState
 	NReduce int
+	Mutex sync.Mutex
 }
 
 
@@ -34,13 +35,25 @@ func (m *Master) Example(args *ExampleArgs, reply *ExampleReply) error {
 func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
 	//fmt.Println("GetTask Start")
 	reply.AllJobDone = false
+	m.Mutex.Lock()
+	defer m.Mutex.Unlock()
+	index := CheckTimeoutTask(m.MapTask)
+	if(index!=-1){
+		m.MapTask[index].State = 0
+	}
+
+	index = CheckTimeoutTask(m.ReduceTask)
+	if(index!=-1){
+		m.ReduceTask[index].State=0
+	}
 	mapTaskDone := m.MapTaskDone()
 	if(mapTaskDone!=true){
 		task := GetFirstTaskUnsigned(m.MapTask)
 		if(task==nil) {
 			return nil
 		}
-		//fmt.Println("GetTask Map, Task:"+task.ToString())
+		fmt.Println("GetTask Map, Task:"+task.ToString())
+		task.AssignTime = time.Now()
 		reply.CopyFrom(task)
 		m.MapTask[task.TaskNo].State = 1
 		return nil
@@ -52,13 +65,15 @@ func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
 		if(task==nil) {
 			return nil
 		}
-		//fmt.Println("GetTask Reduce, Task"+task.ToString())
+		fmt.Println("GetTask Reduce, Task"+task.ToString())
+		task.AssignTime = time.Now()
 		reply.CopyFrom(task)
 		m.ReduceTask[task.TaskNo].State = 1
 		return nil
 	}
 	fmt.Println("GetTask Done")
 	reply.AllJobDone = true
+	
 	return nil
 }
 
@@ -136,6 +151,17 @@ func (m *Master) ReduceTaskDone() bool{
 	return true
 }
 
+func CheckTimeoutTask(tasks []TaskState) int{
+  for _,task := range tasks{
+		if(task.State == 1 && task.AssignTime.Add(time.Second * 10).Before(time.Now()) ){
+			fmt.Println("task timeout"+strconv.Itoa(task.TaskNo))
+			task.State = 0
+			return task.TaskNo
+		}
+	}
+	return -1
+}
+
 func GetFirstTaskUnsigned(tasks []TaskState) *TaskState{
   for _,task := range tasks{
 		if(task.State == 0){
@@ -164,14 +190,15 @@ func (task *TaskState) CopyFrom(s *TaskState){
 func MakeMaster(files []string, nReduce int) *Master {
 	m := Master{}
 	m.MapTask = []TaskState{}
+	now := time.Now()
 	for i:=0;i<len(files);i++ {
-		task := TaskState{files[i], "Map", i, 0, nReduce, false}
+		task := TaskState{files[i], "Map", i, 0, nReduce, false, now}
 		m.MapTask = append(m.MapTask, task)
 	}
 
 	m.ReduceTask = []TaskState{}
 	for i:=0;i<nReduce;i++{
-		task := TaskState{strconv.Itoa(i), "Reduce", i, 0, nReduce, false}
+		task := TaskState{strconv.Itoa(i), "Reduce", i, 0, nReduce, false, now}
 		m.ReduceTask = append(m.ReduceTask, task)
 	}
 

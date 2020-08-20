@@ -8,6 +8,7 @@ package mr
 
 import "os"
 import "strconv"
+import "time"
 
 //
 // example to show how to declare the arguments
@@ -29,6 +30,7 @@ type TaskState struct {
 	State int // 0 未分配, 1 进行中, 2 已完成
 	NReduce int
 	AllJobDone bool
+	AssignTime time.Time
 }
 // Add your RPC definitions here.
 

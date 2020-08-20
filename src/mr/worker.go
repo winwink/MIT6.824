@@ -68,11 +68,11 @@ func GetTask(mapf func(string, string) []KeyValue, reducef func(string, []string
 	}
 
 	if(reply.TaskName==""){
-		//fmt.Println("No Task")
+		fmt.Println("No Task")
 		// sleep(time.Duration(1)*time.Second)
 		return;
 	} else {
-		//fmt.Println("GetTask "+reply.ToString2())
+		fmt.Println("GetTask "+reply.ToString2())
 	}
 	if(reply.TaskType=="Map"){
 		GetTaskMap(mapf, reply)
