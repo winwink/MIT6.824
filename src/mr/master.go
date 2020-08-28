@@ -37,15 +37,15 @@ func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
 	reply.AllJobDone = false
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
-	index := CheckTimeoutTask(m.MapTask)
-	if(index!=-1){
-		m.MapTask[index].State = 0
-	}
+	// index := CheckTimeoutTask(m.MapTask)
+	// if(index!=-1){
+	// 	m.MapTask[index].State = 0
+	// }
 
-	index = CheckTimeoutTask(m.ReduceTask)
-	if(index!=-1){
-		m.ReduceTask[index].State=0
-	}
+	// index = CheckTimeoutTask(m.ReduceTask)
+	// if(index!=-1){
+	// 	m.ReduceTask[index].State=0
+	// }
 	mapTaskDone := m.MapTaskDone()
 	if(mapTaskDone!=true){
 		task := GetFirstTaskUnsigned(m.MapTask)
@@ -78,6 +78,8 @@ func (m *Master) GetTask(args *ExampleArgs, reply *TaskState) error {
 }
 
 func (m *Master) UpdateTask(task TaskState, reply *TaskState) error{
+	m.Mutex.Lock()
+	defer m.Mutex.Unlock()
 	//fmt.Println("Update Task Type:"+task.TaskType+", No:"+ strconv.Itoa(task.TaskNo))
   if(task.TaskType=="Map"){ 
 		//fmt.Println("Update Task map match")
@@ -132,10 +134,9 @@ func (m *Master) Done() bool {
 }
 
 func (m *Master) MapTaskDone() bool{
-	ret := false
 	for _,v := range m.MapTask{
 		if(v.State != 2){
-			return ret
+			return false
 		}
 	}
 	return true
@@ -164,6 +165,10 @@ func CheckTimeoutTask(tasks []TaskState) int{
 
 func GetFirstTaskUnsigned(tasks []TaskState) *TaskState{
   for _,task := range tasks{
+		if(task.State == 1 && task.AssignTime.Add(time.Second * 10).Before(time.Now())){
+			fmt.Println("task timeout"+strconv.Itoa(task.TaskNo))
+			return &task
+		}
 		if(task.State == 0){
 			return &task
 		}
