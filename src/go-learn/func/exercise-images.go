@@ -2,9 +2,9 @@ package main
 
 import "golang.org/x/tour/pic"
 
-func Pic(dx, dy int) [][]uint8 {
-}
+type Image struct{}
 
 func main() {
-	pic.Show(Pic)
+	m := Image{}
+	pic.ShowImage(m)
 }

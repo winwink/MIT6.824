@@ -2,7 +2,7 @@ package main
 
 import (
 	"strings"
-	"../tour/wc"
+	"../../tour/wc"
 )
 
 func WordCount(s string) map[string]int {
